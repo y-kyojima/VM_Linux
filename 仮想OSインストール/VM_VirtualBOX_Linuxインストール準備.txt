@@ -1,0 +1,105 @@
+====================
+■ VirtualBOXへのLinuxインストールするための事前準備
+====================
+
+＝＝＝＝＝
+【参考】ホストOSスペック（ノートPC 2012年2月発売モデル）
+＝＝＝＝＝
+・OS：Windows 10 Home
+・CPU：第二世代Intel Corei-5
+　Intel(R) Core(TM) i5-2520M CPU @ 2.50GHz   2.50 GH
+・メモリ：8.00 GB
+・ストレージ：SSD　100GB
+・USBメモリ：32GB
+　（SSDの空き容量が少なかったので、ゲストOSはUSBメモリにインストール）
+
+
+＝＝＝＝＝
+VMウェア
+＝＝＝＝＝
+・Oracle VirtualBOX
+　本体：ver6.1.32
+　拡張パック：Extension_Pack6.1.32
+
+
+＝＝＝＝＝
+ゲストOS
+＝＝＝＝＝
+・OS1：CentOS7（CentOS-7-x86_64-DVD-2009.iso）
+・OS2：AlmaLinux8.5（AlmaLinux-8.5-x86_64-dvd.iso）
+・OS3：RockyLinux 8.5（Rocky-8.5-x86_64-dvd1.iso）
+・OS4：CentOS8.5（CentOS-8.5.2111-x86_64-dvd1.iso）
+
+※CentOSのサポート期間は以下。
+　　CentOS7・・・2024年6月30日までサポート
+　　CentOS8・・・2021年12月31日でサポート終了
+　　CentOS9・・・リリースしない
+
+※今後採用が広がりそうなLinuxは下記2つ。
+　「AlmaLinux」
+　　→RHEL（RedHatEnterpriseLinux）とバイナリ互換性を目標に開発している無償のRHELクローン
+
+　「Rocky Linux」
+　　→CentOSの創設者が立ち上げたプロジェクトによる無償のRHELクローン
+
+
+＝＝＝＝＝
+その他、インストール必須のフリーウェア
+＝＝＝＝＝
+・Teraterm（4.106）
+
+
+
+＝＝＝＝＝
+仮想マシン初期設定までの作業手順
+＝＝＝＝＝
+インストールする資材のダウンロード
+　・VirtualBOX【本体】
+　　https://download.virtualbox.org/virtualbox/6.1.32/VirtualBox-6.1.32-149290-Win.exe
+
+　・VirtualBOX【拡張パック】
+　　https://download.virtualbox.org/virtualbox/6.1.32/Oracle_VM_VirtualBox_Extension_Pack-6.1.32.vbox-extpack
+
+　・ゲストOS（ダウンロードサイト）
+　　CentOS7
+　　https://ftp.riken.jp/Linux/centos/7.9.2009/isos/x86_64/CentOS-7-x86_64-DVD-2009.iso
+
+　　CentOS8.5（公式サイトでは配布終了しているので、http://vault.centos.org/ からDL）
+　　https://vault.centos.org/8.5.2111/isos/x86_64/CentOS-8.5.2111-x86_64-dvd1.iso
+
+　　AlmaLinux8.5
+　　https://ftp.riken.jp/Linux/almalinux/8.5/isos/x86_64/AlmaLinux-8.5-x86_64-dvd.iso
+
+　　RockyLinux8.5
+　　https://download.rockylinux.org/pub/rocky/8/isos/x86_64/Rocky-8.5-x86_64-dvd1.iso
+
+　・Teraterm【ターミナルソフト】
+　　https://ja.osdn.net/projects/ttssh2/downloads/74780/teraterm-4.106.exe
+
+②VirtualBOXインストール
+　ホストOS（Windows）に本体＋拡張パックをインストール
+
+③ホスト：VirtualBOX 起動
+
+④ホスト：VirtualBOX 仮想サーバ設定
+　「VM_VirtualBOX_Linuxインストール.txt」参照
+
+⑤ホスト：VirtualBOX CentOS7（イメージファイル）インストール
+
+⑥ゲスト：初期設定・ネットワーク接続確認
+　「VM_Linux初期設定.txt」 参照
+
+⑦ホスト：Windows10から仮想マシンへのsshログイン確認
+　・WindowsにTeratermをインストール
+　・Teratermを起動
+　・IPアドレス：⑥で設定した仮想マシンのIPアドレス
+　・TCPポート：22番（デフォルト）
+　・SSHバージョン：SSH2（デフォルト）
+　・IPバージョン：AUTO（デフォルト）
+
+⑧ホスト：バッチファイル作成（仮想マシンの起動・停止）
+　・メモ帳起動
+　・
+
+
+

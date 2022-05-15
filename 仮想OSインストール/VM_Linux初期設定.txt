@@ -1,0 +1,209 @@
+====================
+■ Linuxの初期設定
+　CentOS8.5、AlmaLinux8.5、RockyLinux8.5 共通（CentOS7は、概ねこの通りできるが、多少コマンドが異なるものがある）
+====================
+（以下手順は root ユーザで作業を行う）
+
+・ネットワークデバイス名を確認
+nmcli d
+　→デバイス名を確認（たぶん enp0s3）
+
+
+・ネットワークデバイスをOS起動時に自動的に起動するよう設定
+nmcli c m enp0s3 connection.autoconnect yes
+
+
+・IPアドレス、ゲートウェイ、dnsサーバ設定
+　※IPアドレスはNW環境により変わるので、利用するNWのゲートウェイ、NW内で未使用のIPアドレスを事前に調べておくとよい
+nmcli c m enp0s3 ipv4.addresses 192.168.3.10/24 ipv4.gateway 192.168.3.1 ipv4.dns 192.168.3.1
+
+
+・IPアドレスの設定を固定に設定
+nmcli c m enp0s3 ipv4.method manual
+
+
+・ネットワーク再起動
+nmcli c down enp0s3; nmcli c up enp0s3
+
+
+・ネットワーク設定確認
+ip a
+　または
+nmcli d show enp0s3
+
+↑で設定したIPアドレス、ゲートウェイアドレス、DNSアドレスが設定されていることを確認する
+
+
+・NW疎通確認
+ping 192.168.3.1 ・・・自宅のgatewayアドレス
+ping 8.8.8.8・・・インターネットのDNSサーバ（google）
+
+
+cat /etc/sysconfig/network-scripts/ifcfg-enp0s3
+  → ONBOOT=yes が設定されていること
+
+
+・host名変更
+hostnamectl set-hostname <HOSTNAME> ・・・ホスト名は好きな名前を入れる
+
+
+・hosts設定（設定例）
+vi /etc/hosts
+192.168.3.10   cent7
+192.168.3.11   alma8
+192.168.3.12   rocky8
+192.168.3.13   cent8
+
+[仮想マシンのIPアドレス]〇[ホスト名] <-- 〇は半角スペースかtabを1個以上
+
+
+・TimeZone確認
+timedatectl status
+　→Time zone が Asia/Tokyo になっていない場合、タイムゾーンを設定する
+　　TimeZone設定
+　　　timedatectl set-timezone Asia/Tokyo
+
+
+・時刻同期の状態確認
+chronyc sources
+　→この後設定するので、ここではエラーになっても問題ない
+date
+　→この時点ではシステムクロックはずれていても問題ない
+
+
+・時刻同期設定追加
+cp /etc/chrony.conf /etc/chrony.conf_org
+vi /etc/chrony.conf
+　下記1行を削除
+　pool 2.cloudlinux.pool.ntp.org iburst
+
+　下記3行を追加（時刻同期可能なサーバであれば他のサーバでもOK）
+  server ntp1.jst.mfeed.ad.jp iburst
+  server ntp2.jst.mfeed.ad.jp iburst
+  server ntp3.jst.mfeed.ad.jp iburst
+
+　削除と追加を行ったらファイルを保存
+
+
+・時刻同期サービス（chronyd）の再起動
+systemctl restart chronyd
+
+
+・時刻同期サービス（chronyd）の状態を確認
+systemctl status chronyd
+
+　Active の行を確認（現在の起動状態）
+　　→active (running) になっていればOK（chronydが起動している状態）
+　　　例）Active: active (running) since Sat 2022-05-14 03:21:51 JST; 1 day 14h ago
+
+　　→ inactive (dead)になっていたら、サービス停止状態
+　　　例）Active: inactive (dead) since Sun 2022-05-15 17:28:23 JST; 1s ago
+
+　　下記コマンドを実行して、サービスを起動する
+　　systemctl start chronyd
+　　systemctl status chronyd
+
+
+　Loadedの行を確認（OS起動時の自動起動設定）
+　　→chronyd.service; enabled となっていればOK（自動起動ON）
+　　　例）Loaded: loaded (/usr/lib/systemd/system/chronyd.service; enabled; vendor preset: enabled)
+
+　　→chronyd.service; disabled となっていた場合NG（自動起動OFF）
+　　　例）Loaded: loaded (/usr/lib/systemd/system/chronyd.service; disabled; vendor preset: enabled)
+
+　　下記コマンドを実行して、enabled に変更
+　　systemctl enable chronyd
+　　systemctl restart chronyd
+　　systemctl status chronyd
+
+
+
+・同期確認
+chronyc sources
+　一番左端が、* になっているサーバと同期している
+
+date
+　同期開始直後は時刻のずれ幅が大きいかも
+　chronyd の停止→起動で修正されるかも。
+　　systemctl stop chronyd
+　　systemctl start chronyd
+
+
+・強制同期（時間がずれている場合、コマンドを実行して強制一致させる）
+chronyc makestep
+　　あまり効果がないかも・・・？？
+
+
+
+====================
+Windows側設定
+====================
+
+・VirtualBOXからの仮想OSのデフォルト起動モードを変更（headlessモードで起動するよう変更）
+コマンドプロンプトを起動して下記を実行
+"C:\Program Files\Oracle\VirtualBox\VBoxManage.exe" modifyvm 仮想マシン名 --defaultfrontend headless
+
+　　例）仮想マシン名は、「VM_VirtualBOX_Linuxインストール.txt」で設定した名前を指定する
+　　"C:\Program Files\Oracle\VirtualBox\VBoxManage.exe" modifyvm CentOS8_usb --defaultfrontend headless
+　　"C:\Program Files\Oracle\VirtualBox\VBoxManage.exe" modifyvm AlmaLinux8_usb --defaultfrontend headless
+
+
+・仮想OSの起動・停止バッチ作成
+Windowsでバッチファイルを作成して、デスクトップなどに置いておくと仮想マシンの起動・停止が楽。
+
+例）ユーザが入力した数字に合わせて、仮想マシンを起動したり停止したり起動中のリストを表示する
+====================
+@rem ＜コメント＞
+@rem 起動モード（★で設定）
+@rem ・・・通常：gui、★ヘッドレス：headless　デタッチ：separate
+@rem 停止モード（★で設定）
+@rem ・・・電源オフ：poweroff、ACPIシャットダウン：acpipowerbutton、★サスペンド：savestate、一時停止：pause
+
+@echo off
+echo ## 起動メニュー
+echo   0：起動中の仮想マシンリスト表示
+echo   1：起動 - CentOS7
+echo   2：停止 - CentOS7（サスペンド）
+echo   3：起動 - CentOS8
+echo   4：停止 - CentOS8（サスペンド）
+echo   5：起動 - AlmaLinux8.5
+echo   6：停止 - AlmaLinux8.5（サスペンド）
+echo   7：起動 - RockyLinux8.5
+echo   8：停止 - RockyLinux8.5（サスペンド）
+echo   その他：キャンセル
+
+:start
+set /p action=  番号を入力：
+
+if not defined action (
+  echo 値を入力しなおしてください
+  goto start
+)
+
+
+if "%action%"=="0" (
+  "C:\Program Files\Oracle\VirtualBox\VBoxManage.exe" list runningvms
+  goto start
+) else if "%action%"=="1" (
+  "C:\Program Files\Oracle\VirtualBox\VBoxManage.exe" startvm CentOS7_usb --type headless
+) else if "%action%"=="2" (
+  "C:\Program Files\Oracle\VirtualBox\VBoxManage.exe" controlvm CentOS7_usb savestate
+) else if "%action%"=="3" (
+  "C:\Program Files\Oracle\VirtualBox\VBoxManage.exe" startvm CentOS8_usb --type headless
+) else if "%action%"=="4" (
+  "C:\Program Files\Oracle\VirtualBox\VBoxManage.exe" controlvm CentOS8_usb savestate
+) else if "%action%"=="5" (
+  "C:\Program Files\Oracle\VirtualBox\VBoxManage.exe" startvm AlmaLinux8_usb --type headless
+) else if "%action%"=="6" (
+  "C:\Program Files\Oracle\VirtualBox\VBoxManage.exe" controlvm AlmaLinux8_usb savestate
+) else if "%action%"=="7" (
+  "C:\Program Files\Oracle\VirtualBox\VBoxManage.exe" startvm RockyLinux8_usb --type headless
+) else if "%action%"=="8" (
+  "C:\Program Files\Oracle\VirtualBox\VBoxManage.exe" controlvm RockyLinux8_usb savestate
+) else (
+  echo "キャンセル"
+)
+====================
+
+
+
